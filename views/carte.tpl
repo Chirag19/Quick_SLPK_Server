@@ -14,43 +14,51 @@
   </style>
 
   <link rel="stylesheet" href="https://js.arcgis.com/4.6/esri/css/main.css">
-  <script src="https://js.arcgis.com/4.6/"></script>
+  <script src="https://js.arcgis.com/4.9/"></script>
 
   <script>
-	var measureWidget
+	var measureWidget, view;
     require([
       "esri/Map",
       "esri/views/SceneView",
       "esri/layers/SceneLayer",
 	  "esri/widgets/DirectLineMeasurement3D",
 	  "esri/widgets/Legend",
-
+	  "esri/layers/IntegratedMeshLayer",
+	  "dojo/request",
       "dojo/domReady!"
-    ], function(Map, SceneView, SceneLayer, DirectLineMeasurement3D,Legend) {
+    ], function(Map, SceneView, SceneLayer, DirectLineMeasurement3D,Legend,IntegratedMeshLayer,request) {
 
       // Create Map
       var map = new Map({
-        basemap: "dark-gray",
+        basemap: "topo",
         ground: "world-elevation"
       });
 
       // Create the SceneView
-      var view = new SceneView({
+      view = new SceneView({
         container: "viewDiv",
         map: map,
       });
 
       // Create SceneLayer and add to the map
-      var layer = new SceneLayer({
-        url:"{{url}}",
-        popupEnabled: true
-      });
-      map.add(layer);
-	  
-	  // Automatic zoom to layer extent
-	layer.when(function(){
-	  view.goTo(layer.fullExtent);
-	});
+	  request("{{url}}",{handleAs: "json"}).then(function(json){
+		  if(json.layerType=="IntegratedMesh"){
+			  var layer = new IntegratedMeshLayer({
+				url:"{{url}}"
+			  });
+		  }else{
+			  var layer = new SceneLayer({
+				url:"{{url}}"
+			  });
+		  }
+		  map.add(layer);
+		  
+		  // Automatic zoom to layer extent
+		layer.when(function(){
+		  view.goTo(layer.fullExtent);
+		});
+	  });
 	
 	//3d measure
 	  dojo.connect(dojo.byId("startmeasure"),"onclick", function(){
